@@ -3,13 +3,14 @@ import os
 import time
 from uuid import uuid4
 
-import redis
 import telethon
-import telethon.tl.types
+import redis
 from telethon import TelegramClient, events
-from telethon.tl.functions.messages import ForwardMessagesRequest
+from telethon.tl import functions
 from telethon.types import Message, UpdateNewMessage
+from telethon.tl.functions.messages import ForwardMessagesRequest
 
+from plans import plans_command  # Import the new feature file
 from cansend import CanSend
 from config import *
 from terabox import get_data
@@ -25,6 +26,7 @@ from tools import (
 
 bot = TelegramClient("tele", API_ID, API_HASH)
 
+
 db = redis.Redis(
     host=HOST,
     port=PORT,
@@ -32,80 +34,83 @@ db = redis.Redis(
     decode_responses=True,
 )
 
-
-@bot.on(
-    events.NewMessage(
-        pattern="/start$",
-        incoming=True,
-        outgoing=False,
-        func=lambda x: x.is_private,
-    )
-)
+@bot.on(events.NewMessage(pattern="/start$", incoming=True, outgoing=False))
 async def start(m: UpdateNewMessage):
     reply_text = f"""
-Hey 
+ 𝐇𝐞𝐥𝐥𝐨! 𝐈 𝐚𝐦 𝐓𝐞𝐫𝐚𝐛𝐨𝐱 𝐕𝐢𝐝𝐞𝐨 𝐃𝐨𝐰𝐧𝐥𝐨𝐚𝐝𝐞𝐫 𝐁𝐨𝐭.
+𝐒𝐞𝐧𝐝 𝐦𝐞 𝐭𝐞𝐫𝐚𝐛𝐨𝐱 𝐯𝐢𝐝𝐞𝐨 𝐥𝐢𝐧𝐤 & 𝐈 𝐰𝐢𝐥𝐥 𝐬𝐞𝐧𝐝 𝐕𝐢𝐝𝐞𝐨.
 
-I'm Terabox Bot To Download Videos From Terabox 
+𝐏𝐋𝐀𝐍'𝐒 : /plans"""
+      
+    # Check if the user is a member of both channels
+    channel1 = "@mavimods2"
+    channel2 = "@mavibot_support"  # Replace with the actual username of your second channel
 
-Just send Me The Terabox Video Link And I Will Start Downloading It
-"""
-    
-inlinekeyboradbutton(text='Add Me', url='https://t.me/Terabox_Godxbot'),
-inlinekeyboradbutton(text='updates', url='https://t.me/godx_bots'),
-inlinekeyboradbutton(text='Support', url='https://t.me/tso_chats'),
-inlinekeyboradbutton(text='Owner', url='https://t.me/tso_king'),
+    if not await is_user_on_chat(bot, channel1, m.peer_id) or not await is_user_on_chat(bot, channel2, m.peer_id):
+        return await m.reply("𝐏𝐥𝐞𝐚𝐬𝐞 𝐣𝐨𝐢𝐧 @mavimods2 𝐚𝐧𝐝 @mavibot_support 𝐛𝐞𝐟𝐨𝐫𝐞 𝐮𝐬𝐢𝐧𝐠 𝐭𝐡𝐞 𝐛𝐨𝐭.")
 
-    
-check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
-    if not check_if:
-        return await m.reply("Please join @Godx_bots then send me the link again.")
-    check_if = await is_user_on_chat(bot, "@Tso_chats", m.peer_id)
-    if not check_if:
-        return await m.reply(
-            "Please join @Tso_chats then send me the link again."
-        )
     await m.reply(reply_text, link_preview=False, parse_mode="markdown")
 
-
-@bot.on(
-    events.NewMessage(
-        pattern="/start (.*)",
-        incoming=True,
-        outgoing=False,
-        func=lambda x: x.is_private,
-    )
-)
+@bot.on(events.NewMessage(pattern="/start (.*)", incoming=True, outgoing=False))
 async def start(m: UpdateNewMessage):
     text = m.pattern_match.group(1)
     fileid = db.get(str(text))
-    check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
-    if not check_if:
-        return await m.reply("Please join @Godx_bots then send me the link again.")
-    check_if = await is_user_on_chat(bot, "@Tso_chats", m.peer_id)
-    if not check_if:
-        return await m.reply(
-            "Please join @Tso_chats then send me the link again."
-        )
+
+    # Define the channels
+    channel1 = "@mavimods2"
+    channel2 = "@mavibot_support"
+
+    # Check if the user is a member of both channels
+    check_channel1 = await is_user_on_chat(bot, channel1, m.peer_id)
+    check_channel2 = await is_user_on_chat(bot, channel2, m.peer_id)
+
+    if not check_channel1 or not check_channel2:
+        return await m.reply("𝐏𝐥𝐞𝐚𝐬𝐞 𝐣𝐨𝐢𝐧 @mavimods2 𝐚𝐧𝐝 @mavibot_support 𝐛𝐞𝐟𝐨𝐫𝐞 𝐮𝐬𝐢𝐧𝐠 𝐭𝐡𝐞 𝐛𝐨𝐭.")
+
     await bot(
         ForwardMessagesRequest(
             from_peer=PRIVATE_CHAT_ID,
             id=[int(fileid)],
             to_peer=m.chat.id,
             drop_author=True,
-            # noforwards=True,  # Uncomment it if you dont want to forward the media.
+            noforwards=False,
             background=True,
             drop_media_captions=False,
             with_my_score=True,
         )
     )
 
+# Add the new feature to the bot
+@bot.on(events.NewMessage(pattern="/plans$", incoming=True, outgoing=False))
+async def plans_command_wrapper(event):
+    await plans_command(event)
+
+@bot.on(events.NewMessage(pattern="/adduser (\d+)$", incoming=True, outgoing=False, from_users=ADMINS))
+async def add_user_command(m: UpdateNewMessage):
+    user_id_to_add = int(m.pattern_match.group(1))
+    
+    if user_id_to_add not in ADMINS:
+        ADMINS.append(user_id_to_add)
+        update_config_file()
+        await m.reply(f"User ID {user_id_to_add} added to ADMINS list.")
+    else:
+        await m.reply(f"User ID {user_id_to_add} is already in the ADMINS list.")
+
+def update_config_file():
+    with open('config.py', 'r') as config_file:
+        lines = config_file.readlines()
+    
+    for i, line in enumerate(lines):
+        if line.startswith("ADMINS = "):
+            lines[i] = f"ADMINS = {ADMINS}\n"
+            break
+    
+    with open('config.py', 'w') as config_file:
+        config_file.writelines(lines)
 
 @bot.on(
     events.NewMessage(
-        pattern="/remove (.*)",
-        incoming=True,
-        outgoing=False,
-        from_users=ADMINS,
+        pattern="/remove (.*)", incoming=True, outgoing=False, from_users=ADMINS
     )
 )
 async def remove(m: UpdateNewMessage):
@@ -131,30 +136,36 @@ async def get_message(m: Message):
 
 
 async def handle_message(m: Message):
+    # Define the channels
+    channel1 = "@mavimods2"
+    channel2 = "@mavibot_support" # Replace with your second channel
+
+    # Check if the user is a member of both channels
+    check_channel1 = await is_user_on_chat(bot, channel1, m.peer_id)
+    check_channel2 = await is_user_on_chat(bot, channel2, m.peer_id)
+
+    if not check_channel1 or not check_channel2:
+        return await m.reply(f"Please join {channel1} and {channel2} then send link.")
 
     url = get_urls_from_string(m.text)
     if not url:
-        return await m.reply("Please enter a valid url.")
-    check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
+        return await m.reply("Please enter a valid URL.")
+
+    check_if = await is_user_on_chat(bot, channel1, m.peer_id)
     if not check_if:
-        return await m.reply("Please join @Godx_bots then send me the link again.")
-    check_if = await is_user_on_chat(bot, "@Tso_chats", m.peer_id)
-    if not check_if:
-        return await m.reply(
-            "Please join @Tso_chats then send me the link again."
-        )
-    is_spam = db.get(m.sender_id)
-    if is_spam and m.sender_id not in [6094430636]:
-        return await m.reply("You are spamming. Please wait a 1 minute and try again.")
-    hm = await m.reply("Sending you the media wait...")
+        return await m.reply(f"Please join {channel1} then send me the link again.")
+
+    
+    hm = await m.reply("Sending you the media, please wait...")
+
     count = db.get(f"check_{m.sender_id}")
-    if count and int(count) > 5:
-        return await hm.edit(
-            "You are limited now. Please come back after 2 hours or use another account."
-        )
+    if count and int(count) > 10:
+        return await hm.edit("You are limited now. Please come back after 30 minuts or use another account.")
+
     shorturl = extract_code_from_url(url)
     if not shorturl:
         return await hm.edit("Seems like your link is invalid.")
+
     fileid = db.get(shorturl)
     if fileid:
         try:
@@ -168,17 +179,11 @@ async def handle_message(m: Message):
                 id=[int(fileid)],
                 to_peer=m.chat.id,
                 drop_author=True,
-                # noforwards=True, #Uncomment it if you dont want to forward the media.
+                noforwards=False,
                 background=True,
                 drop_media_captions=False,
                 with_my_score=True,
             )
-        )
-        db.set(m.sender_id, time.monotonic(), ex=60)
-        db.set(
-            f"check_{m.sender_id}",
-            int(count) + 1 if count else 1,
-            ex=7200,
         )
 
         return
@@ -192,13 +197,20 @@ async def handle_message(m: Message):
         and not data["file_name"].endswith(".mkv")
         and not data["file_name"].endswith(".Mkv")
         and not data["file_name"].endswith(".webm")
+        and not data["file_name"].endswith(".MP4")
+        and not data["file_name"].endswith(".png")
+        and not data["file_name"].endswith(".PNG")
+        and not data["file_name"].endswith(".JPG")
+        and not data["file_name"].endswith(".jpg")
+        and not data["file_name"].endswith(".jpeg")
+        and not data["file_name"].endswith(".JPEG")
     ):
         return await hm.edit(
             f"Sorry! File is not supported for now. I can download only .mp4, .mkv and .webm files."
         )
-    if int(data["sizebytes"]) > 524288000 and m.sender_id not in [6094430636]:
+    if int(data["sizebytes"]) > 500000000 and m.sender_id not in ADMINS:
         return await hm.edit(
-            f"Sorry! File is too big. I can download only 500MB and this file is of {data['size']} ."
+            f"Sorry! File is too big. I can download only 500 MB and this file is of {data['size']} ."
         )
 
     start_time = time.time()
@@ -210,8 +222,8 @@ async def handle_message(m: Message):
             return
         bar_length = 20
         percent = current_downloaded / total_downloaded
-        arrow = "█" * int(percent * bar_length)
-        spaces = "░" * (bar_length - len(arrow))
+        arrow = "◉" * int(percent * bar_length)
+        spaces = "◯" * (bar_length - len(arrow))
 
         elapsed_time = time.time() - start_time
 
@@ -246,11 +258,11 @@ async def handle_message(m: Message):
             caption=f"""
 File Name: `{data['file_name']}`
 Size: **{data["size"]}** 
-Direct Link: [Click Here](https://t.me/teraboxdown_bot?start={uuid})
+Direct Link: [Click Here](https://t.me/MaviTerabox_bot?start={uuid})
 
-@RoldexVerse
+@mavimods2
 """,
-            supports_streaming=True,
+            supports_streaming=False,
             spoiler=True,
         )
 
@@ -270,9 +282,9 @@ Direct Link: [Click Here](https://t.me/teraboxdown_bot?start={uuid})
             caption=f"""
 File Name: `{data['file_name']}`
 Size: **{data["size"]}** 
-Direct Link: [Click Here](https://t.me/Terabox_Godxbot?start={uuid})
+Direct Link: [Click Here](https://t.me/MaviTerabox_bot?start={uuid})
 
-@RoldexVerse
+@mavimods2
 """,
             progress_callback=progress_bar,
             thumb=thumbnail if thumbnail else None,
@@ -309,17 +321,11 @@ Direct Link: [Click Here](https://t.me/Terabox_Godxbot?start={uuid})
                 to_peer=m.chat.id,
                 top_msg_id=m.id,
                 drop_author=True,
-                # noforwards=True,  #Uncomment it if you dont want to forward the media.
+                noforwards=False,
                 background=True,
                 drop_media_captions=False,
                 with_my_score=True,
             )
-        )
-        db.set(m.sender_id, time.monotonic(), ex=60)
-        db.set(
-            f"check_{m.sender_id}",
-            int(count) + 1 if count else 1,
-            ex=7200,
         )
 
 
