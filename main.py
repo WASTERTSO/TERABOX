@@ -55,9 +55,8 @@ inlinekeyboradbutton(text='updates', url='https://t.me/godx_bots'),
 inlinekeyboradbutton(text='Support', url='https://t.me/tso_chats'),
 inlinekeyboradbutton(text='Owner', url='https://t.me/tso_king'),
 
-
     
-    check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
+check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
     if not check_if:
         return await m.reply("Please join @Godx_bots then send me the link again.")
     check_if = await is_user_on_chat(bot, "@Tso_chats", m.peer_id)
