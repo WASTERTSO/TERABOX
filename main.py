@@ -43,10 +43,20 @@ db = redis.Redis(
 )
 async def start(m: UpdateNewMessage):
     reply_text = f"""
-Hello! I am a bot to download videos from terabox.
-Send me the terabox link and I will start downloading it.
-Join @Godx_bots For Updates
+Hey 
+
+I'm Terabox Bot To Download Videos From Terabox 
+
+Just send Me The Terabox Video Link And I Will Start Downloading It
 """
+    
+inlinekeyboradbutton(text='Add Me', url='https://t.me/Terabox_Godxbot'),
+inlinekeyboradbutton(text='updates', url='https://t.me/godx_bots'),
+inlinekeyboradbutton(text='Support', url='https://t.me/tso_chats'),
+inlinekeyboradbutton(text='Owner', url='https://t.me/tso_king'),
+
+
+    
     check_if = await is_user_on_chat(bot, "@Godx_bots", m.peer_id)
     if not check_if:
         return await m.reply("Please join @Godx_bots then send me the link again.")
