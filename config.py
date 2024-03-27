@@ -5,7 +5,7 @@ BOT_TOKEN = "7015158795:AAGvic20m9jHl3Be5RZZVYAni1qY2Rx14OQ"  # bot token
 
 
 ## REDIS
-HOST = "http://redis-16992.c305.ap-south-1-1.ec2.cloud.redislabs.com"  # redis host uri
+HOST = "redis-16992.c305.ap-south-1-1.ec2.cloud.redislabs.com"  # redis host uri
 PORT = 16992 # redis port
 PASSWORD = "kjhtvHCFyDeYxdUTRnPUxIB75UBzofgk"  # redis password
 
